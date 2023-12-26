@@ -1,4 +1,3 @@
-import snscrape.modules.twitter as sntwitter
 import asyncio
 from twscrape import API, gather
 from twscrape.logger import set_log_level
@@ -23,7 +22,7 @@ api = API()
 st.set_page_config(page_title="Crawling")
 
 tweets_df = pd.DataFrame()
-st.write("# :spider: Twitter Scraper ")
+st.write("# :spider: X.com Scraper ")
 html_string = "<br>"
 st.markdown(html_string, unsafe_allow_html=True)
 st.markdown('This page returns tweets and its polarity according to your filters.')
@@ -33,15 +32,16 @@ st.markdown(html_string, unsafe_allow_html=True)
 st.session_state.visibility = "visible"
 st.session_state.disabled = False
 option = st.selectbox('Search data via...',('Keyword', 'Hashtag'))
+index_name = st.text_input('Please enter an index name for indexing result', placeholder='Enter your index name here')
 word = st.text_input('Please enter a '+option,  disabled=st.session_state.disabled, placeholder='Enter your query here')
-start = st.date_input("Select start date", datetime.date(2022, 1, 1),key='d1')
-end = st.date_input("Select end date", datetime.date(2023, 1, 1),key='d2')
+start = st.date_input("Select start date", datetime.date(2022, 4, 1),key='d1')
+end = st.date_input("Select end date", datetime.date(2023, 4, 1),key='d2')
 tweet_c = st.slider('Select number of tweets', 0, 1000, 5)
 tweets_list = []
 
 # create index
 es = Elasticsearch(['http://localhost:9200'], basic_auth=('admin', '000000'))
-index_name = "ir_assignment_try"
+# index_name = "new_index"
 
 def new_index(es, index_name, df):
     # Define documents to be appended
@@ -151,14 +151,11 @@ def classify(df):
 
 # SCRAPE DATA 
 if word:
-    async def scrapfromtwitter():
+    async def scrapfromX():
         try:
             if option=='Keyword':
                 async for tweet in api.search(f'{word} lang:en since:{start} until:{end}', limit=tweet_c):
                     tweets_list.append([tweet.date, tweet.rawContent,tweet.likeCount])
-            else:
-                for i,tweet in enumerate(sntwitter.TwitterHashtagScraper(f'{word} lang:en since:{start} until:{end}').get_items()):
-                    tweets_list.append([ tweet.date, tweet.rawContent,tweet.likeCount ])
             tweets_df = pd.DataFrame(tweets_list, columns=['Date', 'Text', 'LikeCount'])
             # preprocess data
             tweets_df = preprocess(tweets_df)
@@ -178,22 +175,10 @@ if word:
         except Exception as e:
             st.error(e)
             st.stop()
-    asyncio.run(scrapfromtwitter())
+    asyncio.run(scrapfromX())
 # else:
     # st.warning(option,' cant be empty', icon="⚠️")
 
-# SIDEBAR
-# with st.sidebar:   
-#     st.info('DETAILS', icon="ℹ️")
-#     if option=='Keyword':
-#         st.info('Keyword is '+word)
-#     else:
-#         st.info('Hashtag is '+word)
-#     st.info('Starting Date is '+str(start))
-#     st.info('End Date is '+str(end))
-#     st.info("Number of Tweets "+str(tweet_c))
-#     st.info("Total Tweets Scraped "+str(len(tweets_df)))
-#     x=st.button('Show Tweets',key=1)
 
 # DOWNLOAD AS CSV
 @st.cache # IMPORTANT: Cache the conversion to prevent computation on every rerun
@@ -206,10 +191,10 @@ if not tweets_df.empty:
     col1, col2, col3 = st.columns(3)
     with col1:
         csv = convert_df(tweets_df) # CSV
-        c=st.download_button(label="Download as CSV",data=csv,file_name='Twitter_data.csv',mime='text/csv',)        
+        c=st.download_button(label="Download as CSV",data=csv,file_name='X_data.csv',mime='text/csv',)        
     with col2:    # JSON
         json_string = tweets_df.to_json(orient ='records')
-        j=st.download_button(label="Download as JSON",file_name="Twitter_data.json",mime="application/json",data=json_string,)
+        j=st.download_button(label="Download as JSON",file_name="X_data.json",mime="application/json",data=json_string,)
 
     with col3: # SHOW
         y=st.button('Display Tweets',key=2)

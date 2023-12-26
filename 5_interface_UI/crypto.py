@@ -6,7 +6,7 @@ import time
 
 st.set_page_config(layout="wide")
 es = Elasticsearch(['http://localhost:9200'], basic_auth=('admin', '000000'))
-index_name = "ir_assignment_tr"
+index_name = "nftcryptoindex"
 
 # read data
 df = pd.read_csv("./assets/final_data.csv")
@@ -18,7 +18,7 @@ df['Polarity'] = df['Polarity'].astype(str)
 df['Datetime'] = pd.to_datetime(df['Datetime'], format='%d/%m/%y')
 #st.write(df.columns)
 
-def create_index(es = es, index_name = "ir_assignment_tr", df = df):
+def create_index(es = es, index_name = "nftcryptoindex", df = df):
     if not es.indices.exists(index=index_name):
         mapping = {
             "mappings": {
@@ -160,9 +160,9 @@ def search(query,size, spec_nft=[]):
         st.warning(f"The index {index_name} is in a {index_health['status']} state. Search may not be accurate.")
 
     # Perform the search
-    st.write(parameters)
+    # st.write(parameters)
     res = es.search(index=index_name, body=parameters, size=size)
-    st.write(res)
+    # st.write(res)
 
     # Extract hits from search results and convert to DataFrame
     hits = res["hits"]["hits"]
